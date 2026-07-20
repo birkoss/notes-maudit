@@ -1,6 +1,6 @@
 <?php
 
-include(__DIR__ . "/db.php");
+require_once(__DIR__ . "/db.php");
 
 class User {
     public static function getTokenByEmail($email) {
@@ -18,5 +18,12 @@ class User {
         $stmt = $db->prepare("INSERT INTO users (created_at, email, google_id, token) VALUES (NOW(), ?, ?, ?)");
         $stmt->execute([$email, $google_id, $token]);
         return $token;
+    }
+
+    public static function getUserByToken($token) {
+        $db = DB::getConnection();
+        $stmt = $db->prepare("SELECT * FROM users WHERE token = ?");
+        $stmt->execute([$token]);
+        return $stmt->fetch();
     }
 }
