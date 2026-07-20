@@ -10,4 +10,9 @@ class Year {
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public static function current() {
+        $years = self::all();
+        return $years[0] ?? null;
+    }
 }
