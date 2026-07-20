@@ -35,10 +35,10 @@ $currentNav = 'home';
 include(__DIR__ . '/../includes/header.php');
 ?>
     <div class="dashboard-filters" id="dashboard-filters">
-        <div class="app-field">
+        <div class="app-field dashboard-filter-primary">
             <label for="filter-group">Groupe</label>
             <select id="filter-group">
-                <option value="">Tous les groupes</option>
+                <option value="">Choisir un groupe</option>
                 <?php foreach ($groups as $group): ?>
                     <option value="<?= (int) $group['id'] ?>"><?= htmlspecialchars($group['name']) ?></option>
                 <?php endforeach; ?>
@@ -46,7 +46,7 @@ include(__DIR__ . '/../includes/header.php');
         </div>
         <div class="app-field">
             <label for="filter-term">Étape</label>
-            <select id="filter-term">
+            <select id="filter-term" disabled>
                 <option value="">Toutes les étapes</option>
                 <?php foreach ($terms as $term): ?>
                     <option value="<?= (int) $term['id'] ?>">Étape <?= htmlspecialchars($term['name']) ?></option>
@@ -55,7 +55,7 @@ include(__DIR__ . '/../includes/header.php');
         </div>
         <div class="app-field">
             <label for="filter-competency">Compétence</label>
-            <select id="filter-competency">
+            <select id="filter-competency" disabled>
                 <option value="">Toutes les compétences</option>
                 <?php foreach ($competencies as $competency): ?>
                     <option value="<?= (int) $competency['id'] ?>"><?= htmlspecialchars($competency['name']) ?></option>
@@ -64,7 +64,7 @@ include(__DIR__ . '/../includes/header.php');
         </div>
         <div class="app-field">
             <label for="filter-skill">Habileté</label>
-            <select id="filter-skill">
+            <select id="filter-skill" disabled>
                 <option value="">Toutes les habiletés</option>
                 <?php foreach ($skills as $skill): ?>
                     <option value="<?= (int) $skill['id'] ?>"><?= htmlspecialchars($skill['name']) ?></option>
@@ -144,13 +144,74 @@ include(__DIR__ . '/../includes/header.php');
             skillSelect.value = keepCurrent ? currentSkill : '';
         }
 
+        function setSecondaryFiltersEnabled(enabled) {
+            termSelect.disabled = !enabled;
+            competencySelect.disabled = !enabled;
+            skillSelect.disabled = !enabled;
+            if (!enabled) {
+                termSelect.value = '';
+                competencySelect.value = '';
+                skillSelect.value = '';
+            }
+        }
+
+        function getFilterParams() {
+            const params = new URLSearchParams();
+            if (!groupSelect.value) {
+                return params;
+            }
+            params.set('group_id', groupSelect.value);
+            if (termSelect.value) params.set('term_id', termSelect.value);
+            if (competencySelect.value) params.set('competency_id', competencySelect.value);
+            if (skillSelect.value) params.set('skill_id', skillSelect.value);
+            return params;
+        }
+
+        function syncUrl() {
+            const params = getFilterParams();
+            const query = params.toString();
+            const nextUrl = query ? (window.location.pathname + '?' + query) : window.location.pathname;
+            const current = window.location.pathname + window.location.search;
+            if (nextUrl !== current) {
+                history.replaceState(null, '', nextUrl);
+            }
+        }
+
+        function applyFiltersFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            groupSelect.value = params.get('group_id') || '';
+
+            if (!groupSelect.value) {
+                setSecondaryFiltersEnabled(false);
+                return false;
+            }
+
+            setSecondaryFiltersEnabled(true);
+            termSelect.value = params.get('term_id') || '';
+            competencySelect.value = params.get('competency_id') || '';
+            refreshSkillOptions();
+            const skillId = params.get('skill_id') || '';
+            if (skillId && [].some.call(skillSelect.options, function (opt) { return opt.value === skillId; })) {
+                skillSelect.value = skillId;
+            } else {
+                skillSelect.value = '';
+            }
+            return true;
+        }
+
+        function showChooseGroupMessage() {
+            contentEl.innerHTML = '<p class="app-page-lead">Choisissez un groupe pour afficher le tableau.</p>';
+        }
+
         function loadContent() {
-            const params = new URLSearchParams({
-                group_id: groupSelect.value || '',
-                term_id: termSelect.value || '',
-                competency_id: competencySelect.value || '',
-                skill_id: skillSelect.value || '',
-            });
+            const params = getFilterParams();
+            syncUrl();
+
+            if (!groupSelect.value) {
+                setSecondaryFiltersEnabled(false);
+                showChooseGroupMessage();
+                return;
+            }
 
             contentEl.classList.add('is-loading');
             contentEl.innerHTML = '<p class="app-page-lead">Chargement…</p>';
@@ -341,7 +402,17 @@ include(__DIR__ . '/../includes/header.php');
                 });
         }
 
-        groupSelect.addEventListener('change', scheduleLoad);
+        groupSelect.addEventListener('change', function () {
+            if (!groupSelect.value) {
+                setSecondaryFiltersEnabled(false);
+                syncUrl();
+                showChooseGroupMessage();
+                return;
+            }
+            setSecondaryFiltersEnabled(true);
+            refreshSkillOptions();
+            scheduleLoad();
+        });
         termSelect.addEventListener('change', scheduleLoad);
         competencySelect.addEventListener('change', function () {
             refreshSkillOptions();
@@ -363,6 +434,20 @@ include(__DIR__ . '/../includes/header.php');
                 return;
             }
             saveNote(selectEl);
+        });
+
+        if (applyFiltersFromUrl()) {
+            loadContent();
+        } else {
+            showChooseGroupMessage();
+        }
+
+        window.addEventListener('popstate', function () {
+            if (applyFiltersFromUrl()) {
+                loadContent();
+            } else {
+                showChooseGroupMessage();
+            }
         });
     })();
     </script>
