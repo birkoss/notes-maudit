@@ -60,6 +60,21 @@ body {
   color: var(--mint-deep) !important;
 }
 
+.app-nav .nav-separator {
+  display: none;
+}
+
+@media (min-width: 992px) {
+  .app-nav .nav-separator {
+    display: block;
+    width: 1px;
+    height: 1.1rem;
+    margin: 0 0.35rem;
+    background: var(--line);
+    list-style: none;
+  }
+}
+
 .app-nav .navbar-toggler {
   border-color: var(--line);
 }
