@@ -56,6 +56,28 @@ class Student {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public static function allByGroup($userId, $groupId) {
+        $db = DB::getConnection();
+
+        $stmt = $db->prepare(
+            'SELECT s.*, g.name AS group_name
+             FROM students s
+             INNER JOIN student_groups g ON g.id = s.group_id
+             WHERE s.user_id = :user_id
+               AND g.user_id = :group_user_id
+               AND s.group_id = :group_id
+               AND s.deleted_at IS NULL
+               AND g.deleted_at IS NULL
+             ORDER BY s.name ASC'
+        );
+        $stmt->execute([
+            'user_id' => $userId,
+            'group_user_id' => $userId,
+            'group_id' => $groupId,
+        ]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public static function find($userId, $studentId) {
         $db = DB::getConnection();
 

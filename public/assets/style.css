@@ -373,6 +373,142 @@ button.app-btn {
     border-color: #dc3545;
   }
 
+/* DASHBOARD */
+
+.dashboard-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.dashboard-filters .app-field {
+  margin: 0;
+}
+
+.dashboard-content {
+  min-height: 8rem;
+}
+
+.dashboard-content.is-loading {
+  opacity: 0.7;
+}
+
+.dashboard-section + .dashboard-section {
+  margin-top: 2rem;
+}
+
+.dashboard-section-title {
+  margin: 0 0 0.85rem;
+  font-family: Fraunces, Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.dashboard-grid th,
+.dashboard-grid td {
+  white-space: nowrap;
+}
+
+.dashboard-grid thead th:not(:first-child) {
+  font-size: 0.75rem;
+  font-weight: 600;
+  max-width: 8rem;
+  white-space: normal;
+  vertical-align: bottom;
+}
+
+.note-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  min-height: 2rem;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid transparent;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.note-cell:hover,
+.note-cell:focus-visible {
+  background: rgba(120, 194, 173, 0.2);
+  border-color: rgba(120, 194, 173, 0.45);
+  outline: none;
+}
+
+.note-modal .modal-content {
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: #f7fcf9;
+}
+
+.note-modal-meta {
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.note-modal-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.note-modal-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(12rem, 16rem);
+  gap: 0.75rem 1rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.note-modal-row.is-focused {
+  border-color: var(--mint);
+  box-shadow: 0 0 0 3px rgba(120, 194, 173, 0.25);
+}
+
+.note-modal-task-name {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.note-modal-task-skill {
+  margin-top: 0.2rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.note-modal-competencies {
+  color: var(--muted);
+}
+
+.note-modal-select {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+}
+
+@media (max-width: 700px) {
+  .note-modal-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* LOGIN */
 
 .login {

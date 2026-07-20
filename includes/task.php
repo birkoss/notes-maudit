@@ -27,6 +27,80 @@ class Task {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public static function filter($userId, $yearId, $termId = 0, $skillId = 0, $competencyId = 0) {
+        $db = DB::getConnection();
+
+        $sql = 'SELECT t.*,
+                       terms.name AS term_name,
+                       GROUP_CONCAT(DISTINCT s.name ORDER BY s.name SEPARATOR ", ") AS skill_names
+                FROM tasks t
+                INNER JOIN terms ON terms.id = t.term_id
+                LEFT JOIN task_skills ts ON ts.task_id = t.id
+                LEFT JOIN skills s ON s.id = ts.skill_id AND s.deleted_at IS NULL
+                LEFT JOIN skill_competencies sc ON sc.skill_id = ts.skill_id
+                WHERE t.user_id = :user_id
+                  AND t.deleted_at IS NULL
+                  AND terms.year_id = :year_id';
+
+        $params = [
+            'user_id' => $userId,
+            'year_id' => $yearId,
+        ];
+
+        if ($termId > 0) {
+            $sql .= ' AND t.term_id = :term_id';
+            $params['term_id'] = $termId;
+        }
+        if ($skillId > 0) {
+            $sql .= ' AND EXISTS (
+                SELECT 1 FROM task_skills ts2
+                WHERE ts2.task_id = t.id AND ts2.skill_id = :skill_id
+            )';
+            $params['skill_id'] = $skillId;
+        }
+        if ($competencyId > 0) {
+            $sql .= ' AND EXISTS (
+                SELECT 1 FROM task_skills ts3
+                INNER JOIN skill_competencies sc2 ON sc2.skill_id = ts3.skill_id
+                WHERE ts3.task_id = t.id AND sc2.competency_id = :competency_id
+            )';
+            $params['competency_id'] = $competencyId;
+        }
+
+        $sql .= ' GROUP BY t.id ORDER BY terms.id ASC, t.name ASC';
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function forSkill($userId, $skillId, $termId = 0) {
+        $db = DB::getConnection();
+
+        $sql = 'SELECT t.*
+                FROM tasks t
+                INNER JOIN task_skills ts ON ts.task_id = t.id
+                WHERE t.user_id = :user_id
+                  AND t.deleted_at IS NULL
+                  AND ts.skill_id = :skill_id';
+
+        $params = [
+            'user_id' => $userId,
+            'skill_id' => $skillId,
+        ];
+
+        if ($termId > 0) {
+            $sql .= ' AND t.term_id = :term_id';
+            $params['term_id'] = $termId;
+        }
+
+        $sql .= ' ORDER BY t.name ASC';
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public static function find($userId, $taskId) {
         $db = DB::getConnection();
 

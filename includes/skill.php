@@ -8,7 +8,8 @@ class Skill {
 
         $stmt = $db->prepare(
             'SELECT s.*,
-                    GROUP_CONCAT(c.name ORDER BY c.name SEPARATOR ", ") AS competency_names
+                    GROUP_CONCAT(c.name ORDER BY c.name SEPARATOR ", ") AS competency_names,
+                    GROUP_CONCAT(c.id ORDER BY c.id) AS competency_ids
              FROM skills s
              LEFT JOIN skill_competencies sc ON sc.skill_id = s.id
              LEFT JOIN competencies c ON c.id = sc.competency_id
@@ -19,6 +20,54 @@ class Skill {
         );
         $stmt->execute(['user_id' => $userId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function forTerm($userId, $termId, $competencyId = 0) {
+        $db = DB::getConnection();
+
+        $sql = 'SELECT DISTINCT s.*
+                FROM skills s
+                INNER JOIN task_skills ts ON ts.skill_id = s.id
+                INNER JOIN tasks t ON t.id = ts.task_id
+                WHERE s.user_id = :user_id
+                  AND s.deleted_at IS NULL
+                  AND t.user_id = :task_user_id
+                  AND t.deleted_at IS NULL
+                  AND t.term_id = :term_id';
+
+        $params = [
+            'user_id' => $userId,
+            'task_user_id' => $userId,
+            'term_id' => $termId,
+        ];
+
+        if ($competencyId > 0) {
+            $sql .= ' AND EXISTS (
+                SELECT 1 FROM skill_competencies sc
+                WHERE sc.skill_id = s.id AND sc.competency_id = :competency_id
+            )';
+            $params['competency_id'] = $competencyId;
+        }
+
+        $sql .= ' ORDER BY s.name ASC';
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function competencyNames($skillId) {
+        $db = DB::getConnection();
+
+        $stmt = $db->prepare(
+            'SELECT c.name
+             FROM competencies c
+             INNER JOIN skill_competencies sc ON sc.competency_id = c.id
+             WHERE sc.skill_id = :skill_id
+             ORDER BY c.name ASC'
+        );
+        $stmt->execute(['skill_id' => $skillId]);
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
     public static function find($userId, $skillId) {
