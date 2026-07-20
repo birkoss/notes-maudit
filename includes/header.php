@@ -2,21 +2,19 @@
 if (!isset($pageTitle)) {
     $pageTitle = 'Notes';
 }
+if (!isset($currentNav)) {
+    $currentNav = '';
+}
 
 $navItems = [
-    ['label' => 'Accueil', 'href' => '/'],
+    ['id' => 'home', 'label' => 'Accueil', 'href' => '/'],
     ['type' => 'separator'],
-    ['label' => 'Habiletés', 'href' => '/skills.php'],
-    ['label' => 'Tâches', 'href' => '/tasks.php'],
+    ['id' => 'skills', 'label' => 'Habiletés', 'href' => '/skills.php'],
+    ['id' => 'tasks', 'label' => 'Tâches', 'href' => '/tasks.php'],
     ['type' => 'separator'],
-    ['label' => 'Groupes', 'href' => '/groups.php'],
-    ['label' => 'Élèves', 'href' => '/students.php'],
+    ['id' => 'groups', 'label' => 'Groupes', 'href' => '/groups.php'],
+    ['id' => 'students', 'label' => 'Élèves', 'href' => '/students.php'],
 ];
-
-$currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-if ($currentPath === '/index.php') {
-    $currentPath = '/';
-}
 ?>
 <!doctype html>
 <html lang="en">
@@ -46,7 +44,7 @@ if ($currentPath === '/index.php') {
                         <li class="nav-item nav-separator" aria-hidden="true"></li>
                     <?php else: ?>
                         <li class="nav-item">
-                            <a class="nav-link<?= $currentPath === $item['href'] ? ' active' : '' ?>" href="<?= htmlspecialchars($item['href']) ?>">
+                            <a class="nav-link<?= $currentNav === $item['id'] ? ' active' : '' ?>" href="<?= htmlspecialchars($item['href']) ?>">
                                 <?= htmlspecialchars($item['label']) ?>
                             </a>
                         </li>

@@ -7,7 +7,7 @@ require_once(__DIR__ . "/../includes/auth.php");
 $user = Auth::requireUser();
 
 $pageTitle = 'Élèves — Notes';
-$currentNav = 'tasks';
+$currentNav = 'students';
 
 include(__DIR__ . '/../includes/header.php');
 ?>
