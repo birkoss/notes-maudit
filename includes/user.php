@@ -15,7 +15,7 @@ class User {
         $token = bin2hex(random_bytes(16));
 
         $db = DB::getConnection();
-        $stmt = $db->prepare("INSERT INTO users (created_at, email, google_id, token) VALUES (NOW(), ?, ?, ?)");
+        $stmt = $db->prepare("INSERT INTO users (email, google_id, token) VALUES (?, ?, ?)");
         $stmt->execute([$email, $google_id, $token]);
         return $token;
     }

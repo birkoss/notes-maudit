@@ -2,6 +2,9 @@
 if (!isset($pageTitle)) {
     $pageTitle = 'Notes';
 }
+if (!isset($currentNav)) {
+    $currentNav = '';
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -16,25 +19,34 @@ if (!isset($pageTitle)) {
     <link href="/assets/style.css?v=<?php echo filemtime(__DIR__ . '/../public/assets/style.css'); ?>" rel="stylesheet">
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
+<nav class="navbar navbar-expand-lg app-nav sticky-top">
     <div class="container">
-        <a class="navbar-brand fw-semibold" href="/">Notes</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+        <a class="navbar-brand" href="/">Notes</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="mainNav">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="/">Home</a>
-                </li>
-                <!-- more links later -->
+            <ul class="navbar-nav me-auto gap-lg-1">
+                <?php
+                $navItems = [
+                    'home' => ['label' => 'Accueil', 'href' => '/'],
+                    'skills' => ['label' => 'Habiletés', 'href' => '/skills.php'],
+                    'groups' => ['label' => 'Groupes', 'href' => '/groups.php'],
+                    'students' => ['label' => 'Élèves', 'href' => '/students.php'],
+                    'tasks' => ['label' => 'Tâches', 'href' => '/tasks.php'],
+                ];
+                foreach ($navItems as $key => $item) {
+                    $active = $currentNav === $key ? ' active' : '';
+                    echo '<li class="nav-item"><a class="nav-link' . $active . '" href="' . htmlspecialchars($item['href']) . '">' . htmlspecialchars($item['label']) . '</a></li>';
+                }
+                ?>
             </ul>
-            <ul class="navbar-nav">
+            <ul class="navbar-nav align-items-lg-center gap-lg-1">
                 <li class="nav-item">
-                    <a class="nav-link" href="/logout.php">Logout</a>
+                    <a class="nav-link nav-link-logout" href="/logout.php">Logout</a>
                 </li>
             </ul>
         </div>
     </div>
 </nav>
-<main class="container py-4">
+<main class="container app-main">
