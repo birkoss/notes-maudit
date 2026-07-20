@@ -1,0 +1,7 @@
+{
+    "name": "google/apiclient-wrapper",
+    "description": "Client Google API for login with Google",
+    "require": {
+        "google/apiclient": "^2.15"
+    }
+}
