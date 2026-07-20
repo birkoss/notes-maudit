@@ -120,6 +120,13 @@ body {
   margin-bottom: 0;
 }
 
+.app-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
 .app-btn {
   display: inline-flex;
   align-items: center;
@@ -261,12 +268,31 @@ body {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.app-field textarea {
+  width: 100%;
+  min-height: 12rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.45;
+  resize: vertical;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
 .app-field input::placeholder {
   color: rgba(74, 107, 98, 0.65);
 }
 
+.app-field textarea::placeholder {
+  color: rgba(74, 107, 98, 0.65);
+}
+
 .app-field input:focus,
-.app-field select:focus {
+.app-field select:focus,
+.app-field textarea:focus {
   outline: none;
   border-color: var(--mint);
   box-shadow: 0 0 0 3px rgba(120, 194, 173, 0.35);
@@ -290,8 +316,14 @@ button.app-btn {
     font-size: 0.9rem;
     color: #842029;
   }
+  .app-field-hint {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
   .app-field input.is-invalid,
-  .app-field select.is-invalid {
+  .app-field select.is-invalid,
+  .app-field textarea.is-invalid {
     border-color: #dc3545;
   }
 
