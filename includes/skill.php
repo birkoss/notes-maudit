@@ -45,6 +45,24 @@ class Skill {
         return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
     }
 
+    public static function findIds($userId, array $ids) {
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+        $ids = array_filter($ids, function ($id) {
+            return $id > 0;
+        });
+        if (empty($ids)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $db = DB::getConnection();
+        $stmt = $db->prepare(
+            "SELECT id FROM skills WHERE user_id = ? AND deleted_at IS NULL AND id IN ($placeholders)"
+        );
+        $stmt->execute(array_merge([$userId], $ids));
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+    }
+
     public static function create($userId, $name, array $competencyIds) {
         $db = DB::getConnection();
 
