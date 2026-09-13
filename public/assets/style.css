@@ -245,6 +245,10 @@ body {
   gap: 1.25rem;
 }
 
+.app-form--wide {
+  max-width: 42rem;
+}
+
 .app-field {
   display: grid;
   gap: 0.4rem;

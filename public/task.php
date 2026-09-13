@@ -87,7 +87,7 @@ $formAction = $isEdit ? '/task.php?id=' . $taskId : '/task.php';
     <?php elseif (empty($skills)): ?>
         <p class="app-page-lead">Aucune habileté disponible. <a href="/skill.php">Créez une habileté</a> avant d’ajouter une tâche.</p>
     <?php else: ?>
-        <form class="app-form" method="post" action="<?= htmlspecialchars($formAction) ?>">
+        <form class="app-form app-form--wide" method="post" action="<?= htmlspecialchars($formAction) ?>">
             <div class="app-field">
                 <label for="name">Nom</label>
                 <input type="text" id="name" name="name" value="<?= htmlspecialchars($name) ?>" required maxlength="120" autocomplete="off" placeholder="ex. Présentation orale" class="<?= isset($errors['name']) ? 'is-invalid' : '' ?>">
