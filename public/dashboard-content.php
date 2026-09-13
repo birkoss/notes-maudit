@@ -66,6 +66,11 @@ if ($skillId > 0) {
     $tasks = Task::forSkill($user['id'], $skillId, $termId);
     $notes = Note::notesByTaskForSkill($user['id'], $groupId, $skillId, $termId);
 
+    $taskIds = array_map(function ($task) {
+        return (int) $task['id'];
+    }, $tasks);
+    $rates = Note::successRatesByTask($groupId, $taskIds);
+
     if (empty($tasks)) {
         echo '<p class="app-page-lead">Aucune tâche pour cette habileté' . ($termId > 0 ? ' dans cette étape' : '') . '.</p>';
         exit;
@@ -107,6 +112,15 @@ if ($skillId > 0) {
                     </tr>
                 <?php endforeach; ?>
             </tbody>
+            <tfoot>
+                <tr class="dashboard-success-row">
+                    <th scope="row">Réussite</th>
+                    <?php foreach ($tasks as $task): ?>
+                        <?php $taskId = (int) $task['id']; ?>
+                        <td class="text-center fw-semibold" data-task-rate="<?= $taskId ?>"><?= $rates[$task['id']] ?> %</td>
+                    <?php endforeach; ?>
+                </tr>
+            </tfoot>
         </table>
     </div>
     <?php

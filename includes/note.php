@@ -228,4 +228,43 @@ class Note {
         ]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public static function successRatesByTask($groupId, array $taskIds) {
+        $taskIds = array_values(array_unique(array_map('intval', $taskIds)));
+        $result = [];
+        foreach ($taskIds as $taskId) {
+            $result[$taskId] = null;
+        }
+        if (empty($taskIds)) {
+            return $result;
+        }
+        $db = DB::getConnection();
+        $placeholders = [];
+        $params = ['group_id' => $groupId];
+        foreach ($taskIds as $i => $taskId) {
+            $key = 'task_' . $i;
+            $placeholders[] = ':' . $key;
+            $params[$key] = $taskId;
+        }
+        $stmt = $db->prepare(
+            'SELECT sn.task_id,
+                    SUM(CASE WHEN sn.note >= 3 THEN 1 ELSE 0 END) AS success_count,
+                    SUM(CASE WHEN sn.note IS NOT NULL THEN 1 ELSE 0 END) AS note_count
+            FROM student_notes sn
+            INNER JOIN students st ON st.id = sn.student_id
+            WHERE sn.task_id IN (' . implode(', ', $placeholders) . ')
+            AND st.group_id = :group_id
+            AND st.deleted_at IS NULL
+            GROUP BY sn.task_id'
+        );
+        $stmt->execute($params);
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $noteCount = (int) $row['note_count'];
+            if ($noteCount === 0) {
+                continue;
+            }
+            $result[(int) $row['task_id']] = (int) round(100 * (int) $row['success_count'] / $noteCount);
+        }
+        return $result;
+    }
 }

@@ -251,6 +251,13 @@ include(__DIR__ . '/../includes/header.php');
             return String(task.note);
         }
 
+        function displayRate(rate) {
+            if (rate === null || rate === undefined) {
+                return '—';
+            }
+            return String(rate) + ' %';
+        }
+
         function displayAverage(average) {
             if (average === null || average === undefined) {
                 return '—';
@@ -377,6 +384,11 @@ include(__DIR__ . '/../includes/header.php');
                     );
                     if (skillCell) {
                         skillCell.textContent = displayAverage(data.average);
+                    }
+
+                    const rateCell = contentEl.querySelector('[data-task-rate="' + data.task_id + '"]');
+                    if (rateCell) {
+                        rateCell.textContent = displayRate(data.rate);
                     }
 
                     // Update task cell if present

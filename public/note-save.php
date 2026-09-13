@@ -60,9 +60,12 @@ Note::save($studentId, $taskId, $skillId, $note);
 $effectiveTermId = $termId > 0 ? $termId : (int) $task['term_id'];
 $average = Note::averageForStudentSkill($studentId, $skillId, $effectiveTermId);
 
+$rates = Note::successRatesByTask((int) $student['group_id'], [$taskId]);
+
 echo json_encode([
     'ok' => true,
     'note' => $note === 'clear' ? null : $note,
+    'rate' => $rates[$taskId] ?? null,
     'cleared' => $note === 'clear',
     'average' => $average,
     'student_id' => $studentId,
