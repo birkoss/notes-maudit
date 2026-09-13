@@ -393,6 +393,8 @@ include(__DIR__ . '/../includes/header.php');
                     if (activeCell && activeCell.dataset.mode === 'task' && activeCell.dataset.taskId === String(data.task_id)) {
                         activeCell.textContent = displayNote(data.note, data.cleared);
                     }
+
+                    getModal().hide();
                 })
                 .catch(function () {
                     alert('Impossible d’enregistrer la note.');
