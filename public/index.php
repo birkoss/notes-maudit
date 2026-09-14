@@ -110,6 +110,8 @@ include(__DIR__ . '/../includes/header.php');
         let loadTimer = null;
         let activeCell = null;
 
+        let selectedStudentId = null;
+
         function getModal() {
             if (!modal) {
                 modal = new bootstrap.Modal(modalEl);
@@ -233,6 +235,25 @@ include(__DIR__ . '/../includes/header.php');
                 })
                 .finally(function () {
                     contentEl.classList.remove('is-loading');
+
+                    // Add event listeners to filter students
+                    document.querySelectorAll('.filter-student').forEach(function (student) {
+                        student.addEventListener('click', function (event) {
+                            event.preventDefault();
+                            console.log('Student clicked:', student.dataset.studentId);
+
+                            if (selectedStudentId === null) {
+                                selectedStudentId = student.dataset.studentId;
+                            } else {
+                                selectedStudentId = null;
+                            }
+
+                            document.querySelectorAll('.student-row').forEach(function (row) {
+                                const keep = selectedStudentId === null || row.dataset.studentId === selectedStudentId;
+                                row.hidden = !keep;
+                            });
+                        });
+                    });
                 });
         }
 

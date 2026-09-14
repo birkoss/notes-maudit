@@ -89,8 +89,8 @@ if ($skillId > 0) {
             <tbody>
                 <?php foreach ($students as $student): ?>
                     <?php $sid = (int) $student['id']; ?>
-                    <tr>
-                        <td class="fw-semibold"><?= htmlspecialchars($student['name']) ?></td>
+                    <tr class="student-row" data-student-id="<?= $sid ?>">
+                        <td class="fw-semibold"><a class="filter-student" href="#" data-student-id="<?= $sid ?>"><?= htmlspecialchars($student['name']) ?></a></td>
                         <?php foreach ($tasks as $task): ?>
                             <?php
                             $tid = (int) $task['id'];

@@ -622,3 +622,11 @@ button.app-btn {
   outline: 2px solid var(--login-ink);
   outline-offset: 3px;
 }
+
+a.filter-student {
+  display: inline-block;
+  cursor: pointer !important;
+  color: var(--mint-deep);
+  text-decoration: underline;
+  text-underline-offset: 0.15em; 
+}
