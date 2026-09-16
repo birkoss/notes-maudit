@@ -459,6 +459,15 @@ button.app-btn {
   color: var(--muted);
 }
 
+.app-table.dashboard-grid > :not(caption) > * > .dashboard-mode-col {
+  background: rgba(120, 194, 173, 0.18);
+  color: var(--ink);
+}
+
+.app-table.dashboard-grid tbody tr:hover > .dashboard-mode-col {
+  background: rgba(120, 194, 173, 0.28);
+}
+
 .note-cell {
   display: inline-flex;
   align-items: center;

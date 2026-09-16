@@ -48,6 +48,43 @@ function formatTaskNoteCell(array $notes, $studentId, $taskId, $skillId) {
     return htmlspecialchars((string) $notes[$studentId][$taskId][$skillId]);
 }
 
+function studentMode(array $notes, $studentId, array $columns) {
+    $counts = [];
+    foreach ($columns as $column) {
+        $taskId = (int) $column['task_id'];
+        $skillId = (int) $column['skill_id'];
+        if (!isset($notes[$studentId][$taskId]) || !array_key_exists($skillId, $notes[$studentId][$taskId])) {
+            continue;
+        }
+        $value = $notes[$studentId][$taskId][$skillId];
+        if ($value === null) {
+            continue;
+        }
+        $value = (int) $value;
+        if (!isset($counts[$value])) {
+            $counts[$value] = 0;
+        }
+        $counts[$value]++;
+    }
+    if (empty($counts)) {
+        return null;
+    }
+    $bestValue = null;
+    $bestCount = 0;
+    $tied = false;
+    foreach ($counts as $value => $count) {
+        $value = (int) $value;
+        if ($count > $bestCount) {
+            $bestCount = $count;
+            $bestValue = $value;
+            $tied = false;
+        } elseif ($count === $bestCount) {
+            $tied = true;
+        }
+    }
+    return ($tied || $bestCount < 2) ? null : $bestValue;
+}
+
 $columns = Task::dashboardColumns($user['id'], (int) $currentYear['id'], $termId, $skillId, $competencyId);
 if (empty($columns)) {
     echo '<p class="app-page-lead">Aucune tâche pour ces filtres.</p>';
@@ -78,6 +115,9 @@ $showSkillInHeader = count($skillIdsInColumns) > 1;
                             <?php endif; ?>
                         </th>
                     <?php endforeach; ?>
+                    <?php if ($showSkillInHeader): ?>
+                        <th scope="col" class="text-center dashboard-mode-col">Mode</th>
+                    <?php endif; ?>
                 </tr>
             </thead>
             <tbody>
@@ -104,6 +144,12 @@ $showSkillInHeader = count($skillIdsInColumns) > 1;
                                 ><?= $display ?></button>
                             </td>
                         <?php endforeach; ?>
+                        <?php if ($showSkillInHeader): ?>
+                            <?php $mode = studentMode($notes, $sid, $columns); ?>
+                            <td class="text-center fw-semibold dashboard-mode-col" data-student-mode="<?= $sid ?>">
+                                <?= $mode === null ? '—' : (int) $mode ?>
+                            </td>
+                        <?php endif; ?>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -119,6 +165,9 @@ $showSkillInHeader = count($skillIdsInColumns) > 1;
                             <?= $rate === null ? '—' : ((int) $rate) . ' %' ?>
                         </td>
                     <?php endforeach; ?>
+                    <?php if ($showSkillInHeader): ?>
+                        <td class="dashboard-mode-col"></td>
+                    <?php endif; ?>
                 </tr>
             </tfoot>
         </table>

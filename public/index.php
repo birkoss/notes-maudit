@@ -328,6 +328,60 @@ include(__DIR__ . '/../includes/header.php');
             return String(note);
         }
 
+        function numericNoteFromCell(text) {
+            const value = String(text || '').trim();
+            if (value === '' || value === '—' || value === 'N/E') {
+                return null;
+            }
+            const note = parseInt(value, 10);
+            if (note < 1 || note > 5) {
+                return null;
+            }
+            return note;
+        }
+
+        function modeFromNotes(values) {
+            const counts = {};
+            values.forEach(function (value) {
+                if (value === null) {
+                    return;
+                }
+                counts[value] = (counts[value] || 0) + 1;
+            });
+            let bestValue = null;
+            let bestCount = 0;
+            let tied = false;
+            Object.keys(counts).forEach(function (key) {
+                const value = parseInt(key, 10);
+                const count = counts[key];
+                if (count > bestCount) {
+                    bestCount = count;
+                    bestValue = value;
+                    tied = false;
+                } else if (count === bestCount) {
+                    tied = true;
+                }
+            });
+            return (tied || bestCount < 2) ? null : bestValue;
+        }
+
+        function updateStudentMode(studentId) {
+            const row = contentEl.querySelector('.student-row[data-student-id="' + studentId + '"]');
+            if (!row) {
+                return;
+            }
+            const values = [];
+            row.querySelectorAll('.note-cell[data-mode="task"]').forEach(function (cell) {
+                values.push(numericNoteFromCell(cell.textContent));
+            });
+            const modeCell = row.querySelector('[data-student-mode]');
+            if (!modeCell) {
+                return;
+            }
+            const mode = modeFromNotes(values);
+            modeCell.textContent = mode === null ? '—' : String(mode);
+        }
+
         function openNoteModal(cell) {
             activeCell = cell;
             const studentId = cell.dataset.studentId;
@@ -451,6 +505,8 @@ include(__DIR__ . '/../includes/header.php');
                     if (activeCell && activeCell.dataset.mode === 'task' && activeCell.dataset.taskId === String(data.task_id)) {
                         activeCell.textContent = displayNote(data.note, data.cleared);
                     }
+
+                    updateStudentMode(data.student_id);
 
                     getModal().hide();
                 })
