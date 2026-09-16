@@ -205,6 +205,14 @@ include(__DIR__ . '/../includes/header.php');
             contentEl.innerHTML = '<p class="app-page-lead">Choisissez un groupe pour afficher le tableau.</p>';
         }
 
+        function hasSecondaryFilter() {
+            return !!(termSelect.value || competencySelect.value || skillSelect.value);
+        }
+
+        function showChooseFilterMessage() {
+            contentEl.innerHTML = '<p class="app-page-lead">Choisissez une étape, une compétence ou une habileté.</p>';
+        }
+
         function loadContent() {
             const params = getFilterParams();
             syncUrl();
@@ -212,6 +220,12 @@ include(__DIR__ . '/../includes/header.php');
             if (!groupSelect.value) {
                 setSecondaryFiltersEnabled(false);
                 showChooseGroupMessage();
+                return;
+            }
+
+            setSecondaryFiltersEnabled(true);
+            if (!hasSecondaryFilter()) {
+                showChooseFilterMessage();
                 return;
             }
 
@@ -407,10 +421,9 @@ include(__DIR__ . '/../includes/header.php');
                         skillCell.textContent = displayAverage(data.average);
                     }
 
-                    const rateCell = contentEl.querySelector('[data-task-rate="' + data.task_id + '"]');
-                    if (rateCell) {
+                    contentEl.querySelectorAll('[data-task-rate="' + data.task_id + '"]').forEach(function (rateCell) {
                         rateCell.textContent = displayRate(data.rate);
-                    }
+                    });
 
                     // Update task cell if present
                     const taskCell = contentEl.querySelector(

@@ -155,13 +155,13 @@ class Note {
     }
 
     /**
-     * Notes par élève et tâche pour une habileté.
-     * Retourne [student_id => [task_id => note]]
+     * Notes par élève, tâche et habileté.
+     * Retourne [student_id => [task_id => [skill_id => note]]]
      */
-    public static function notesByTaskForSkill($userId, $groupId, $skillId, $termId = 0) {
+    public static function notesByTaskForSkill($userId, $groupId, $skillId = 0, $termId = 0) {
         $db = DB::getConnection();
 
-        $sql = 'SELECT sn.student_id, sn.task_id, sn.note
+        $sql = 'SELECT sn.student_id, sn.task_id, sn.skill_id, sn.note
                 FROM student_notes sn
                 INNER JOIN students st ON st.id = sn.student_id
                 INNER JOIN tasks t ON t.id = sn.task_id
@@ -169,15 +169,18 @@ class Note {
                   AND st.group_id = :group_id
                   AND st.deleted_at IS NULL
                   AND t.user_id = :task_user_id
-                  AND t.deleted_at IS NULL
-                  AND sn.skill_id = :skill_id';
+                  AND t.deleted_at IS NULL';
 
         $params = [
             'user_id' => $userId,
             'group_id' => $groupId,
             'task_user_id' => $userId,
-            'skill_id' => $skillId,
         ];
+
+        if ($skillId > 0) {
+            $sql .= ' AND sn.skill_id = :skill_id';
+            $params['skill_id'] = $skillId;
+        }
 
         if ($termId > 0) {
             $sql .= ' AND t.term_id = :term_id';
@@ -191,11 +194,14 @@ class Note {
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
             $studentId = (int) $row['student_id'];
             $taskId = (int) $row['task_id'];
+            $rowSkillId = (int) $row['skill_id'];
             if (!isset($result[$studentId])) {
                 $result[$studentId] = [];
             }
-            // Keep null notes as null for display
-            $result[$studentId][$taskId] = $row['note'] === null ? null : (int) $row['note'];
+            if (!isset($result[$studentId][$taskId])) {
+                $result[$studentId][$taskId] = [];
+            }
+            $result[$studentId][$taskId][$rowSkillId] = $row['note'] === null ? null : (int) $row['note'];
         }
         return $result;
     }

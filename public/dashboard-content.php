@@ -27,62 +27,56 @@ if ($groupId < 1) {
     exit;
 }
 
+if ($termId < 1 && $competencyId < 1 && $skillId < 1) {
+    echo '<p class="app-page-lead">Choisissez une étape, une compétence ou une habileté.</p>';
+    exit;
+}
+
 $students = Student::allByGroup($user['id'], $groupId);
 if (empty($students)) {
     echo '<p class="app-page-lead">Aucun élève dans ce groupe.</p>';
     exit;
 }
 
-function formatNoteCell($value) {
-    if ($value === null) {
-        return 'N/E';
-    }
-    return htmlspecialchars((string) $value);
-}
-
-function formatTaskNoteCell(array $notes, $studentId, $taskId) {
-    if (!isset($notes[$studentId]) || !array_key_exists($taskId, $notes[$studentId])) {
+function formatTaskNoteCell(array $notes, $studentId, $taskId, $skillId) {
+    if (!isset($notes[$studentId][$taskId]) || !array_key_exists($skillId, $notes[$studentId][$taskId])) {
         return '—';
     }
-    if ($notes[$studentId][$taskId] === null) {
+    if ($notes[$studentId][$taskId][$skillId] === null) {
         return 'N/E';
     }
-    return htmlspecialchars((string) $notes[$studentId][$taskId]);
+    return htmlspecialchars((string) $notes[$studentId][$taskId][$skillId]);
 }
 
-function formatAverageCell(array $averages, $studentId, $skillId) {
-    if (!isset($averages[$studentId][$skillId])) {
-        return '—';
-    }
-    $value = $averages[$studentId][$skillId];
-    if ($value === 'N/E') {
-        return 'N/E';
-    }
-    return htmlspecialchars((string) $value);
+$columns = Task::dashboardColumns($user['id'], (int) $currentYear['id'], $termId, $skillId, $competencyId);
+if (empty($columns)) {
+    echo '<p class="app-page-lead">Aucune tâche pour ces filtres.</p>';
+    exit;
 }
 
-// Vue 3 : une habileté → colonnes = tâches
-if ($skillId > 0) {
-    $tasks = Task::forSkill($user['id'], $skillId, $termId);
-    $notes = Note::notesByTaskForSkill($user['id'], $groupId, $skillId, $termId);
+$notes = Note::notesByTaskForSkill($user['id'], $groupId, $skillId, $termId);
+$taskIds = array_values(array_unique(array_map(function ($column) {
+    return (int) $column['task_id'];
+}, $columns)));
+$rates = Note::successRatesByTask($groupId, $taskIds);
 
-    $taskIds = array_map(function ($task) {
-        return (int) $task['id'];
-    }, $tasks);
-    $rates = Note::successRatesByTask($groupId, $taskIds);
-
-    if (empty($tasks)) {
-        echo '<p class="app-page-lead">Aucune tâche pour cette habileté' . ($termId > 0 ? ' dans cette étape' : '') . '.</p>';
-        exit;
-    }
-    ?>
+$skillIdsInColumns = array_unique(array_map(function ($column) {
+    return (int) $column['skill_id'];
+}, $columns));
+$showSkillInHeader = count($skillIdsInColumns) > 1;
+?>
     <div class="table-responsive">
         <table class="table table-hover align-middle app-table dashboard-grid">
             <thead>
                 <tr>
                     <th scope="col">Élève</th>
-                    <?php foreach ($tasks as $task): ?>
-                        <th scope="col" class="text-center"><?= htmlspecialchars($task['name']) ?></th>
+                    <?php foreach ($columns as $column): ?>
+                        <th scope="col" class="text-center">
+                            <?= htmlspecialchars($column['task_name']) ?>
+                            <?php if ($showSkillInHeader): ?>
+                                <span class="dashboard-col-skill"><?= htmlspecialchars($column['skill_name']) ?></span>
+                            <?php endif; ?>
+                        </th>
                     <?php endforeach; ?>
                 </tr>
             </thead>
@@ -91,18 +85,19 @@ if ($skillId > 0) {
                     <?php $sid = (int) $student['id']; ?>
                     <tr class="student-row" data-student-id="<?= $sid ?>">
                         <td class="fw-semibold"><a class="filter-student" href="#" data-student-id="<?= $sid ?>"><?= htmlspecialchars($student['name']) ?></a></td>
-                        <?php foreach ($tasks as $task): ?>
+                        <?php foreach ($columns as $column): ?>
                             <?php
-                            $tid = (int) $task['id'];
-                            $display = formatTaskNoteCell($notes, $sid, $tid);
-                            $cellTerm = $termId > 0 ? $termId : (int) $task['term_id'];
+                            $tid = (int) $column['task_id'];
+                            $cellSkillId = (int) $column['skill_id'];
+                            $display = formatTaskNoteCell($notes, $sid, $tid, $cellSkillId);
+                            $cellTerm = $termId > 0 ? $termId : (int) $column['term_id'];
                             ?>
                             <td class="text-center">
                                 <button
                                     type="button"
                                     class="note-cell"
                                     data-student-id="<?= $sid ?>"
-                                    data-skill-id="<?= $skillId ?>"
+                                    data-skill-id="<?= $cellSkillId ?>"
                                     data-task-id="<?= $tid ?>"
                                     data-term-id="<?= $cellTerm ?>"
                                     data-mode="task"
@@ -115,83 +110,16 @@ if ($skillId > 0) {
             <tfoot>
                 <tr class="dashboard-success-row">
                     <th scope="row">Réussite</th>
-                    <?php foreach ($tasks as $task): ?>
-                        <?php $taskId = (int) $task['id']; ?>
-                        <td class="text-center fw-semibold" data-task-rate="<?= $taskId ?>"><?= $rates[$task['id']] ?> %</td>
+                    <?php foreach ($columns as $column): ?>
+                        <?php
+                        $taskId = (int) $column['task_id'];
+                        $rate = $rates[$taskId] ?? null;
+                        ?>
+                        <td class="text-center fw-semibold" data-task-rate="<?= $taskId ?>">
+                            <?= $rate === null ? '—' : ((int) $rate) . ' %' ?>
+                        </td>
                     <?php endforeach; ?>
                 </tr>
             </tfoot>
         </table>
     </div>
-    <?php
-    exit;
-}
-
-// Vue 2 : une étape → colonnes = habiletés (moyenne)
-if ($termId > 0) {
-    $skills = Skill::forTerm($user['id'], $termId, $competencyId);
-    $averages = Note::averagesBySkillForTerm($user['id'], $groupId, $termId, $competencyId);
-
-    if (empty($skills)) {
-        echo '<p class="app-page-lead">Aucune habileté liée à des tâches de cette étape.</p>';
-        exit;
-    }
-    ?>
-    <div class="table-responsive">
-        <table class="table table-hover align-middle app-table dashboard-grid">
-            <thead>
-                <tr>
-                    <th scope="col">Élève</th>
-                    <?php foreach ($skills as $skill): ?>
-                        <th scope="col" class="text-center"><?= htmlspecialchars($skill['name']) ?></th>
-                    <?php endforeach; ?>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($students as $student): ?>
-                    <?php $sid = (int) $student['id']; ?>
-                    <tr>
-                        <td class="fw-semibold"><?= htmlspecialchars($student['name']) ?></td>
-                        <?php foreach ($skills as $skill): ?>
-                            <?php
-                            $skid = (int) $skill['id'];
-                            $display = formatAverageCell($averages, $sid, $skid);
-                            ?>
-                            <td class="text-center">
-                                <button
-                                    type="button"
-                                    class="note-cell"
-                                    data-student-id="<?= $sid ?>"
-                                    data-skill-id="<?= $skid ?>"
-                                    data-term-id="<?= $termId ?>"
-                                    data-mode="skill"
-                                ><?= $display ?></button>
-                            </td>
-                        <?php endforeach; ?>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-    <?php
-    exit;
-}
-
-// Vue 1 : groupe seulement → liste des élèves
-?>
-<div class="table-responsive">
-    <table class="table table-hover align-middle app-table">
-        <thead>
-            <tr>
-                <th scope="col">Élève</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($students as $student): ?>
-                <tr>
-                    <td class="fw-semibold"><?= htmlspecialchars($student['name']) ?></td>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
-</div>

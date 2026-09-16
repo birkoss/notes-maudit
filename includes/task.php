@@ -74,6 +74,55 @@ class Task {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Colonnes du tableau de notes : une entrée par tâche × habileté correspondant aux filtres.
+     */
+    public static function dashboardColumns($userId, $yearId, $termId = 0, $skillId = 0, $competencyId = 0) {
+        $db = DB::getConnection();
+
+        $sql = 'SELECT t.id AS task_id,
+                       t.name AS task_name,
+                       t.term_id,
+                       s.id AS skill_id,
+                       s.name AS skill_name
+                FROM tasks t
+                INNER JOIN terms ON terms.id = t.term_id
+                INNER JOIN task_skills ts ON ts.task_id = t.id
+                INNER JOIN skills s ON s.id = ts.skill_id AND s.deleted_at IS NULL
+                WHERE t.user_id = :user_id
+                  AND t.deleted_at IS NULL
+                  AND s.user_id = :skill_user_id
+                  AND terms.year_id = :year_id';
+
+        $params = [
+            'user_id' => $userId,
+            'skill_user_id' => $userId,
+            'year_id' => $yearId,
+        ];
+
+        if ($termId > 0) {
+            $sql .= ' AND t.term_id = :term_id';
+            $params['term_id'] = $termId;
+        }
+        if ($skillId > 0) {
+            $sql .= ' AND s.id = :skill_id';
+            $params['skill_id'] = $skillId;
+        }
+        if ($competencyId > 0) {
+            $sql .= ' AND EXISTS (
+                SELECT 1 FROM skill_competencies sc
+                WHERE sc.skill_id = s.id AND sc.competency_id = :competency_id
+            )';
+            $params['competency_id'] = $competencyId;
+        }
+
+        $sql .= ' ORDER BY terms.id ASC, t.name ASC, s.name ASC';
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public static function forSkill($userId, $skillId, $termId = 0) {
         $db = DB::getConnection();
 
