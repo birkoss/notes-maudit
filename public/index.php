@@ -166,6 +166,7 @@ include(__DIR__ . '/../includes/header.php');
             if (termSelect.value) params.set('term_id', termSelect.value);
             if (competencySelect.value) params.set('competency_id', competencySelect.value);
             if (skillSelect.value) params.set('skill_id', skillSelect.value);
+            if (selectedStudentId) params.set('student_id', selectedStudentId);
             return params;
         }
 
@@ -185,10 +186,12 @@ include(__DIR__ . '/../includes/header.php');
 
             if (!groupSelect.value) {
                 setSecondaryFiltersEnabled(false);
+                selectedStudentId = null;
                 return false;
             }
 
             setSecondaryFiltersEnabled(true);
+            selectedStudentId = params.get('student_id') || null;
             termSelect.value = params.get('term_id') || '';
             competencySelect.value = params.get('competency_id') || '';
             refreshSkillOptions();
@@ -243,32 +246,41 @@ include(__DIR__ . '/../includes/header.php');
                 })
                 .then(function (html) {
                     contentEl.innerHTML = html;
+                    applyStudentFilter();
                 })
                 .catch(function () {
                     contentEl.innerHTML = '<p class="app-page-lead">Impossible de charger le contenu.</p>';
                 })
                 .finally(function () {
                     contentEl.classList.remove('is-loading');
-
-                    // Add event listeners to filter students
-                    document.querySelectorAll('.filter-student').forEach(function (student) {
-                        student.addEventListener('click', function (event) {
-                            event.preventDefault();
-                            console.log('Student clicked:', student.dataset.studentId);
-
-                            if (selectedStudentId === null) {
-                                selectedStudentId = student.dataset.studentId;
-                            } else {
-                                selectedStudentId = null;
-                            }
-
-                            document.querySelectorAll('.student-row').forEach(function (row) {
-                                const keep = selectedStudentId === null || row.dataset.studentId === selectedStudentId;
-                                row.hidden = !keep;
-                            });
-                        });
-                    });
                 });
+        }
+
+        function applyStudentFilter() {
+            const rows = contentEl.querySelectorAll('.student-row');
+            if (!selectedStudentId) {
+                rows.forEach(function (row) {
+                    row.hidden = false;
+                });
+                return;
+            }
+
+            let found = false;
+            rows.forEach(function (row) {
+                const keep = row.dataset.studentId === selectedStudentId;
+                if (keep) {
+                    found = true;
+                }
+                row.hidden = !keep;
+            });
+
+            if (rows.length > 0 && !found) {
+                selectedStudentId = null;
+                rows.forEach(function (row) {
+                    row.hidden = false;
+                });
+                syncUrl();
+            }
         }
 
         function scheduleLoad() {
@@ -451,6 +463,7 @@ include(__DIR__ . '/../includes/header.php');
         }
 
         groupSelect.addEventListener('change', function () {
+            selectedStudentId = null;
             if (!groupSelect.value) {
                 setSecondaryFiltersEnabled(false);
                 syncUrl();
@@ -469,6 +482,19 @@ include(__DIR__ . '/../includes/header.php');
         skillSelect.addEventListener('change', scheduleLoad);
 
         contentEl.addEventListener('click', function (event) {
+            const studentLink = event.target.closest('.filter-student');
+            if (studentLink) {
+                event.preventDefault();
+                if (selectedStudentId === studentLink.dataset.studentId) {
+                    selectedStudentId = null;
+                } else {
+                    selectedStudentId = studentLink.dataset.studentId;
+                }
+                applyStudentFilter();
+                syncUrl();
+                return;
+            }
+
             const cell = event.target.closest('.note-cell');
             if (!cell) {
                 return;
